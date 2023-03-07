@@ -1,10 +1,10 @@
-﻿using System.Diagnostics;
-using System.Reflection;
+﻿using System.Reflection;
+using System.Text;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
-using static System.Net.Mime.MediaTypeNames;
+using Newtonsoft.Json.Linq;
 
 [Flags]
 public enum DayOfWeekFlag
@@ -102,7 +102,13 @@ class Program
         client.Log += Log;
         commands = new CommandService();
         services = new ServiceCollection().BuildServiceProvider();
-        string token = "<token>";
+
+        // 秘密ファイルからトークン取得
+        string secret = File.ReadAllText("secret.json", Encoding.UTF8);
+        JObject secretData = JObject.Parse(secret);
+        string token = (string)secretData["token"];
+        
+        // ログイン
         await commands.AddModulesAsync(Assembly.GetEntryAssembly(), services);
         await client.LoginAsync(TokenType.Bot, token);
         await client.StartAsync();
@@ -158,7 +164,7 @@ class Program
             "お疲れさまでした！！！！！！！！！！！！！！！"));
 
         // 対象のチャンネルID（ひとまず直指定）
-        ulong targetChannelId = 900379983439077440;
+        ulong targetChannelId = 1079783008657219594;
         var channel = (IMessageChannel)(await client.GetChannelAsync(targetChannelId));
 
         remindTimers = remindData
