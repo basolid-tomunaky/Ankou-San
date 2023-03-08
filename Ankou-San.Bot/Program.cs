@@ -104,7 +104,7 @@ class Program
         services = new ServiceCollection().BuildServiceProvider();
 
         // 秘密ファイルからトークン取得
-        string secret = File.ReadAllText("secret.json", Encoding.UTF8);
+        string secret = File.ReadAllText("secret.ankou.json", Encoding.UTF8);
         JObject secretData = JObject.Parse(secret);
         string token = (string)secretData["token"];
         
