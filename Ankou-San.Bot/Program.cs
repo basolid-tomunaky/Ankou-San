@@ -164,7 +164,7 @@ class Program
             "お疲れさまでした！！！！！！！！！！！！！！！"));
 
         // 対象のチャンネルID（ひとまず直指定）
-        ulong targetChannelId = 1079783008657219594;
+        ulong targetChannelId = 900379983439077440;
         var channel = (IMessageChannel)(await client.GetChannelAsync(targetChannelId));
 
         remindTimers = remindData
