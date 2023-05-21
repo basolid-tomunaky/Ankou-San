@@ -35,12 +35,15 @@ public class RemindData
 
     public readonly string Content;
 
-    public RemindData(int hour, int minute, DayOfWeekFlag dayOfWeekFlag, string content)
+    public readonly Embed Embed;
+
+    public RemindData(int hour, int minute, DayOfWeekFlag dayOfWeekFlag, string content, Embed embed = null)
     {
         Hour = hour; 
         Minute = minute;
         DayOfWeekFlag = dayOfWeekFlag;
         Content = content;
+        Embed = embed;
     }
 
     public TimeSpan ToTimeSpan()
@@ -121,22 +124,35 @@ class Program
 
     /// <summary>
     /// UnityTimeのリマインダーをセットアップ
-    /// </summary>
+    /// </summary>s
     private async Task SetupUnityTimeReminder(DiscordSocketClient client)
     {
+        // UnityTimeのマニュアルを取得する
+        var manualForumChannel = (IForumChannel)(await client.GetChannelAsync(1082281906269331516));
+        var activeThreads = (await Task.WhenAll(
+            manualForumChannel.GetActiveThreadsAsync(),
+            manualForumChannel.GetPublicArchivedThreadsAsync()))
+            .SelectMany(x => x.Select(x => x));
+        var unityTimeThread = activeThreads.First(x => x.Id == 1082623925827149916);
+
+        var embed = new EmbedBuilder();
+        embed.WithTitle(unityTimeThread.Name);
+        embed.WithDescription(
+            $"UnityTimeとは、「毎日決まった時間に集まって、短い時間集中して作業しよう！」という企画です！" +
+            $"詳細は[こちら](https://discord.com/channels/712937279118901248/1082623925827149916)！");
+
+        string remindText =
+            "本日も**{0}~{1}**までの間でUnityTimeを行います！\n" +
+            "ボイスチャンネルの**UnityTime**までお越しください！\n" +
+            "お時間合えば是非！";
+
         // 各種リマインドの時刻設定
         var remindData = new List<RemindData>();
         
         // 事前リマインド（平日の前日）
-        remindData.Add(new RemindData(19, 00, DayOfWeekFlag.TomorrowIsWeekday,
-            "本日も**21:00~22:00**までの間でUnityTimeを行います！\n" +
-            "ボイスチャンネルの**UnityTime**までお越しください！\n" +
-            "お時間合えば是非！"));
+        remindData.Add(new RemindData(19, 00, DayOfWeekFlag.TomorrowIsWeekday, string.Format(remindText, "21:00", "22:00"), embed.Build()));
         // 事前リマインド（休日の前日）
-        remindData.Add(new RemindData(19, 00, DayOfWeekFlag.TomorrowIsHoliday,
-            "本日も**21:00~22:30**までの間でUnityTimeを行います！\n" +
-            "ボイスチャンネルの**UnityTime**までお越しください！\n" +
-            "お時間合えば是非！"));
+        remindData.Add(new RemindData(19, 00, DayOfWeekFlag.TomorrowIsHoliday, string.Format(remindText, "21:00", "22:30"), embed.Build()));
 
         // 共通
         remindData.Add(new RemindData(21, 00, DayOfWeekFlag.All,
@@ -164,7 +180,7 @@ class Program
             "お疲れさまでした！！！！！！！！！！！！！！！"));
 
         // 対象のチャンネルID（ひとまず直指定）
-        ulong targetChannelId = 900379983439077440;
+        ulong targetChannelId = 1079783008657219594;
         var channel = (IMessageChannel)(await client.GetChannelAsync(targetChannelId));
 
         remindTimers = remindData
@@ -189,22 +205,19 @@ class Program
             DateTimeUtil.GetTime(remindData.Hour, remindData.Minute));
 
         // イベント登録
-        timer.Elapsed = () =>
-        {
-            var now = DateTime.Now;
-            if (remindData.DayOfWeekFlag.HasFlag(now.DayOfWeek.ToFlag()))
-                SendMessage(channel, remindData.Content);
-        };
+        timer.Elapsed = () => SendMessageIfElapsed(channel, remindData);
 
         return timer;
     }
 
     /// <summary>
-    /// メッセージ送信
+    /// 指定時間が経過したらメッセージを送信
     /// </summary>
-    private void SendMessage(IMessageChannel channel, string content)
+    private void SendMessageIfElapsed(IMessageChannel channel, RemindData remindData)
     {
-        var _ = channel.SendMessageAsync(content);
+        var now = DateTime.Now;
+        if (remindData.DayOfWeekFlag.HasFlag(now.DayOfWeek.ToFlag()))
+            channel.SendMessageAsync(remindData.Content, embed: remindData.Embed).Forget();
     }
 
     /// <summary>
