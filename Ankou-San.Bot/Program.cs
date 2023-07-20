@@ -87,6 +87,31 @@ class Program
 
     private ProcessOnceDayTimer[] remindTimers;
 
+    private readonly string[] remindTextList = new string[]
+    {
+        "本日も**{0}~{1}**までの間でUnityTimeを行います！\n" +
+        "ボイスチャンネルの**UnityTime**までお越しください！\n" +
+        "お時間合えば是非！",
+
+        "```cs\n" +
+        "private void Update()\n" +
+        "{{\n" +
+        "   var start = new TimeSpan(21, 0, 0);     // 21:00\n" +
+        "   var end = new TimeSpan(1, 0, 0);       // 22:00\n" +
+        "\n" +
+        "   var now = DateTime.Now.TimeOfDay;\n" +
+        "   if (start <= now && now <= end)\n" +
+        "   {{\n" +
+        "       // TODO : \n" +
+        "       // 本日も{0}~{1}までの間でUnityTimeを行います！\n" +
+        "       // ボイスチャンネルのUnityTimeまでお越しください！\n" +
+        "       // お時間合えば是非！\n" +
+        "       UpdateUnityTime();\n" +
+        "   }}\n" +
+        "}}\n" +
+        "```",
+    };
+
     static void Main(string[] args)
     {
         var program = new Program();
@@ -141,10 +166,7 @@ class Program
             $"UnityTimeとは、「毎日決まった時間に集まって、短い時間集中して作業しよう！」という企画です！" +
             $"詳細は[こちら](https://discord.com/channels/712937279118901248/1082623925827149916)！");
 
-        string remindText =
-            "本日も**{0}~{1}**までの間でUnityTimeを行います！\n" +
-            "ボイスチャンネルの**UnityTime**までお越しください！\n" +
-            "お時間合えば是非！";
+        string remindText = remindTextList[1];
 
         // 各種リマインドの時刻設定
         var remindData = new List<RemindData>();
